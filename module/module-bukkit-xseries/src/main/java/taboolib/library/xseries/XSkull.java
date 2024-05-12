@@ -242,7 +242,7 @@ public class XSkull {
             case UUID: return applySkin(meta, Bukkit.getOfflinePlayer((UUID) result.object));
             case NAME: return applySkinFromName(meta, identifier);
             case BASE64:       return setSkullBase64(meta, identifier,                               extractMojangSHAFromBase64((String) result.object));
-            case TEXTURE_URL:  return setSkullBase64(meta, encodeTexturesURL(identifier),            extractMojangSHAFromBase64(identifier));
+            case TEXTURE_URL:  return setSkullBase64(meta, encodeTexturesURL(identifier),            (String) result.object);
             case TEXTURE_HASH: return setSkullBase64(meta, encodeTexturesURL(TEXTURES + identifier), identifier);
             case UNKNOWN:      return setSkullBase64(meta, INVALID_SKULL_VALUE,                           INVALID_SKULL_VALUE);
             default: throw new AssertionError("Unknown skull value");
@@ -300,7 +300,7 @@ public class XSkull {
             case UUID:         return new GameProfile((UUID) result.object,          GAME_PROFILE_EMPTY_NAME);
             case NAME:         return new GameProfile(GAME_PROFILE_EMPTY_UUID,       identifier);
             case BASE64:       return profileFromBase64(                             identifier,  extractMojangSHAFromBase64((String) result.object));
-            case TEXTURE_URL:  return profileFromBase64(encodeTexturesURL(           identifier), extractMojangSHAFromBase64(identifier));
+            case TEXTURE_URL:  return profileFromBase64(encodeTexturesURL(           identifier), (String) result.object);
             case TEXTURE_HASH: return profileFromBase64(encodeTexturesURL(TEXTURES + identifier), identifier);
             case UNKNOWN:      return profileFromBase64(INVALID_SKULL_VALUE,                           INVALID_SKULL_VALUE); // This can't be cached because the caller might change it.
             default: throw new AssertionError("Unknown skull value");
@@ -317,7 +317,10 @@ public class XSkull {
         }
 
         if (isUsername(identifier)) return new StringSkullCache(ValueType.NAME);
-        if (identifier.contains("textures.minecraft.net")) return new StringSkullCache(ValueType.TEXTURE_URL);
+        if (identifier.contains("textures.minecraft.net")) {
+            String mojangSHA = identifier.substring(identifier.lastIndexOf('/'));
+            return new StringSkullCache(ValueType.TEXTURE_URL, mojangSHA);
+        }
         if (identifier.length() > 100) {
             String decoded = decodeBase64(identifier);
             if (decoded != null) return new StringSkullCache(ValueType.BASE64, decoded);
